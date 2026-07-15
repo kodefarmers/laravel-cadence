@@ -13,12 +13,12 @@ final readonly class State
      * Create a new state instance.
      *
      * @param  int  $attempts  The number of recorded attempts.
-     * @param  bool  $locked  Whether the key is currently in a backoff period.
+     * @param  bool  $isLocked  Whether the key is currently in a backoff period.
      * @param  int  $remainingLockSeconds  The number of seconds remaining until the backoff expires.
      */
     public function __construct(
         public int $attempts,
-        public bool $locked,
+        public bool $isLocked,
         public int $remainingLockSeconds,
     ) {}
 }

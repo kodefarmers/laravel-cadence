@@ -18,7 +18,7 @@ it('returns an empty initial state', function (): void {
     $state = $this->repository->state('login:127.0.0.1');
 
     expect($state->attempts)->toBe(0)
-        ->and($state->locked)->toBeFalse()
+        ->and($state->isLocked)->toBeFalse()
         ->and($state->remainingLockSeconds)->toBe(0);
 });
 
@@ -51,7 +51,7 @@ it('locks a key', function (): void {
 
     $state = $this->repository->state('login');
 
-    expect($state->locked)->toBeTrue()
+    expect($state->isLocked)->toBeTrue()
         ->and($state->remainingLockSeconds)
         ->toBeGreaterThan(0)
         ->toBeLessThanOrEqual(10);
@@ -64,7 +64,7 @@ it('unlocks a key', function (): void {
 
     $state = $this->repository->state('login');
 
-    expect($state->locked)->toBeFalse()
+    expect($state->isLocked)->toBeFalse()
         ->and($state->remainingLockSeconds)->toBe(0);
 });
 
@@ -82,10 +82,10 @@ it('keeps attempts separate for different keys', function (): void {
 it('keeps lock state separate for different keys', function (): void {
     $this->repository->lock('login', 10);
 
-    expect($this->repository->state('login')->locked)
+    expect($this->repository->state('login')->isLocked)
         ->toBeTrue();
 
-    expect($this->repository->state('register')->locked)
+    expect($this->repository->state('register')->isLocked)
         ->toBeFalse();
 });
 

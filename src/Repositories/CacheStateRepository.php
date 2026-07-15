@@ -28,7 +28,7 @@ final readonly class CacheStateRepository implements StateRepository
 
         return new State(
             attempts: (int) $this->cache->get($this->attemptsKey($key), 0),
-            locked: $this->cache->has($this->lockKey($key)),
+            isLocked: $this->cache->has($this->lockKey($key)),
             remainingLockSeconds: max(0, $expiresAt - time()),
         );
     }
