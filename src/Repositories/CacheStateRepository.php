@@ -15,8 +15,8 @@ use Kodefarmers\Cadence\ValueObjects\State;
 final readonly class CacheStateRepository implements StateRepository
 {
     public function __construct(
-        private Repository $cache,
-        private CadenceConfig $config,
+        private readonly Repository $cache,
+        private readonly CadenceConfig $config,
     ) {}
 
     /**
