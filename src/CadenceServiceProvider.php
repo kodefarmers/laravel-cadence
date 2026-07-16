@@ -14,6 +14,13 @@ class CadenceServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->mergeConfigFrom(__DIR__ . '/../config/cadence.php', 'cadence');
+
+        $this->app->singleton(
+            CadenceManager::class,
+            fn ($app) => new CadenceManager($app),
+        );
+
+        $this->app->alias(CadenceManager::class, 'cadence');
     }
 
     /**
