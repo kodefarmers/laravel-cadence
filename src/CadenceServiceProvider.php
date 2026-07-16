@@ -6,4 +6,25 @@ namespace Kodefarmers\Cadence;
 
 use Illuminate\Support\ServiceProvider;
 
-class CadenceServiceProvider extends ServiceProvider {}
+class CadenceServiceProvider extends ServiceProvider
+{
+    /**
+     * Register the Cadence services.
+     */
+    public function register(): void
+    {
+        $this->mergeConfigFrom(__DIR__ . '/../config/cadence.php', 'cadence');
+    }
+
+    /**
+     * Bootstrap the Cadence services.
+     */
+    public function boot(): void
+    {
+        if ($this->app->runningInConsole()) {
+            $this->publishes([
+                __DIR__ . '/../config/cadence.php' => $this->app->configPath('cadence.php'),
+            ], 'cadence-config');
+        }
+    }
+}
