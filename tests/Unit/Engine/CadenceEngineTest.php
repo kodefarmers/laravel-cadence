@@ -74,3 +74,12 @@ it('continues counting failures after a temporary lock expires', function (): vo
         ->and($result->violationCount)->toBe(2)
         ->and($result->delay)->toBe(4);
 });
+
+it('throws a runtime exception when the key is locked', function (): void {
+    for ($i = 1; $i <= 4; $i++) {
+        $this->engine->recordFailure('login');
+    }
+
+    expect(fn () => $this->engine->ensureNotLocked('login'))
+        ->toThrow(RuntimeException::class);
+});
