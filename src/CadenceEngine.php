@@ -30,7 +30,7 @@ final readonly class CadenceEngine
         if ($attempt <= $this->config->freeAttempts) {
             return new CadenceResult(
                 attempt: $attempt,
-                violation: 0,
+                violationCount: 0,
                 delay: 0,
                 isLocked: false,
             );
@@ -44,7 +44,7 @@ final readonly class CadenceEngine
 
         return new CadenceResult(
             attempt: $attempt,
-            violation: $violation,
+            violationCount: $violation,
             delay: $delay,
             isLocked: true,
         );

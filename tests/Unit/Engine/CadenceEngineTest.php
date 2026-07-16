@@ -33,7 +33,7 @@ it('locks on the first violation', function (): void {
     $result = $this->engine->recordFailure('login');
 
     expect($result->attempt)->toBe(4)
-        ->and($result->violation)->toBe(1)
+        ->and($result->violationCount)->toBe(1)
         ->and($result->delay)->toBe(2)
         ->and($result->isLocked)->toBeTrue();
 });
@@ -44,7 +44,7 @@ it('increases the delay for subsequent violations', function (): void {
     }
 
     expect($result->attempt)->toBe(5)
-        ->and($result->violation)->toBe(2)
+        ->and($result->violationCount)->toBe(2)
         ->and($result->delay)->toBe(4)
         ->and($result->isLocked)->toBeTrue();
 });
@@ -71,6 +71,6 @@ it('continues counting failures after a temporary lock expires', function (): vo
     $result = $this->engine->recordFailure('login');
 
     expect($result->attempt)->toBe(5)
-        ->and($result->violation)->toBe(2)
+        ->and($result->violationCount)->toBe(2)
         ->and($result->delay)->toBe(4);
 });

@@ -18,7 +18,7 @@ final readonly class CadenceResult
         /**
          * The current backoff violation count.
          */
-        public int $violation,
+        public int $violationCount,
 
         /**
          * The applied backoff delay, in seconds.
