@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use Kodefarmers\Cadence\CadenceEngine;
+use Kodefarmers\Cadence\Exceptions\CadenceLockedException;
 use Kodefarmers\Cadence\Strategies\ExponentialStrategy;
 use Kodefarmers\Cadence\Tests\Fakes\FakeStateRepository;
 use Kodefarmers\Cadence\ValueObjects\CadenceConfig;
@@ -75,11 +76,31 @@ it('continues counting failures after a temporary lock expires', function (): vo
         ->and($result->delay)->toBe(4);
 });
 
-it('throws a runtime exception when the key is locked', function (): void {
+it('throws a cadence locked exception when the key is locked', function (): void {
     for ($i = 1; $i <= 4; $i++) {
         $this->engine->recordFailure('login');
     }
 
     expect(fn () => $this->engine->ensureNotLocked('login'))
-        ->toThrow(RuntimeException::class);
+        ->toThrow(CadenceLockedException::class);
+});
+
+it('throws a cadence locked exception with lock details when a key is currently locked', function (): void {
+    $this->engine->recordFailure('login');
+    $this->engine->recordFailure('login');
+    $this->engine->recordFailure('login');
+    $this->engine->recordFailure('login');
+
+    try {
+        $this->engine->ensureNotLocked('login');
+    } catch (CadenceLockedException $exception) {
+        expect($exception->retryAfter())->toBe(2)
+            ->and($exception->attempts())->toBe(4)
+            ->and($exception->violationCount())->toBe(1)
+            ->and($exception->getMessage())->toBe('The key [login] is currently in backoff. Retry after 2 seconds.');
+
+        return;
+    }
+
+    throw new Exception('Expected CadenceLockedException to be thrown.');
 });
