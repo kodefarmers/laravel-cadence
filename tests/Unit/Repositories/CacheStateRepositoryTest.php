@@ -10,7 +10,10 @@ use Kodefarmers\Cadence\ValueObjects\CadenceConfig;
 beforeEach(function (): void {
     $this->repository = new CacheStateRepository(
         cache: new Repository(new ArrayStore()),
-        config: new CadenceConfig(),
+        config: new CadenceConfig(
+            freeAttempts: 3,
+            idleTimeout: 3600
+        ),
     );
 });
 

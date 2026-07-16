@@ -14,7 +14,10 @@ beforeEach(function (): void {
     $this->engine = new CadenceEngine(
         strategy: new ExponentialStrategy(),
         repository: $this->repository,
-        config: new CadenceConfig(),
+        config: new CadenceConfig(
+            freeAttempts: 3,
+            idleTimeout: 3600
+        ),
     );
 });
 

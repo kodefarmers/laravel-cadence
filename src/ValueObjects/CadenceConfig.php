@@ -13,11 +13,11 @@ final readonly class CadenceConfig
         /**
          * The number of attempts allowed before backoff is applied.
          */
-        public int $freeAttempts = 3,
+        public int $freeAttempts,
 
         /**
          * The number of seconds to retain attempt state after inactivity.
          */
-        public int $idleTimeout = 3600,
+        public int $idleTimeout,
     ) {}
 }
