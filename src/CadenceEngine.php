@@ -8,6 +8,7 @@ use Kodefarmers\Cadence\Contracts\DelayStrategy;
 use Kodefarmers\Cadence\Contracts\StateRepository;
 use Kodefarmers\Cadence\ValueObjects\CadenceConfig;
 use Kodefarmers\Cadence\ValueObjects\CadenceResult;
+use RuntimeException;
 
 /**
  * Coordinates backoff state and delay calculations.
@@ -57,6 +58,20 @@ final readonly class CadenceEngine
     {
         $this->repository->resetAttempts($key);
         $this->repository->unlock($key);
+    }
+
+    /**
+     * Ensure the given key is not currently in backoff.
+     *
+     * @throws RuntimeException
+     */
+    public function ensureNotLocked(string $key): void
+    {
+        $state = $this->repository->state($key);
+
+        if ($state->isLocked) {
+            throw new RuntimeException("The given key {$key}  is currently in backoff.");
+        }
     }
 
     /**
