@@ -13,7 +13,7 @@ return [
     |
     */
 
-    'default' => 'exponential',
+    'default' => env('CADENCE_DEFAULT_DRIVER', 'exponential'),
 
     /*
     |--------------------------------------------------------------------------
@@ -27,6 +27,10 @@ return [
     'free_attempts' => 3,
 
     'idle_timeout' => 3600,
+
+    'cache' => [
+        'store' => env('CADENCE_CACHE_STORE'),
+    ],
 
     /*
     |--------------------------------------------------------------------------

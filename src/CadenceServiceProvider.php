@@ -42,12 +42,21 @@ class CadenceServiceProvider extends ServiceProvider
             /** @var CacheFactory $cacheFactory */
             $cacheFactory = $app->make(CacheFactory::class);
 
-            /** @var CadenceConfig $config */
-            $config = $app->make(CadenceConfig::class);
+            /** @var ConfigRepository $config */
+            $config = $app->make(ConfigRepository::class);
+
+            /** @var CadenceConfig $cadenceConfig */
+            $cadenceConfig = $app->make(CadenceConfig::class);
+
+            $configuredStore = $config->get('cadence.cache.store');
+
+            $cache = is_string($configuredStore) && $configuredStore !== ''
+                ? $cacheFactory->store($configuredStore)
+                : $cacheFactory->store();
 
             return new CacheStateRepository(
-                cache: $cacheFactory->store(),
-                config: $config
+                cache: $cache,
+                config: $cadenceConfig
             );
         });
 
