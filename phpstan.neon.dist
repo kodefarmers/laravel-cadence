@@ -2,9 +2,12 @@ includes:
     - phpstan-baseline.neon
 
 parameters:
-    level: 5
+    level: max
+
     paths:
         - src
-        - config
-        - database
+        - tests
+
     tmpDir: build/phpstan
+
+    reportUnmatchedIgnoredErrors: true
