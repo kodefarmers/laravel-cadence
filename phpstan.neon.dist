@@ -8,6 +8,10 @@ parameters:
         - src
         - tests
 
+    excludePaths:
+        analyse:
+            - tests/ArchTest.php
+
     tmpDir: build/phpstan
 
     reportUnmatchedIgnoredErrors: true
