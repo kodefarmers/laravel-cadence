@@ -7,8 +7,21 @@ use Illuminate\Cache\Repository;
 use Kodefarmers\Cadence\Repositories\CacheStateRepository;
 use Kodefarmers\Cadence\ValueObjects\CadenceConfig;
 
+function makeRepository(): CacheStateRepository
+{
+    return new CacheStateRepository(
+        cache: new Repository(new ArrayStore()),
+        config: new CadenceConfig(
+            freeAttempts: 3,
+            idleTimeout: 3600
+        ),
+    );
+}
+
 beforeEach(function (): void {
-    $this->repository = new CacheStateRepository(
+    $repository = makeRepository();
+
+    $repository = new CacheStateRepository(
         cache: new Repository(new ArrayStore()),
         config: new CadenceConfig(
             freeAttempts: 3,
@@ -18,7 +31,9 @@ beforeEach(function (): void {
 });
 
 it('returns an empty initial state', function (): void {
-    $state = $this->repository->state('login:127.0.0.1');
+    $repository = makeRepository();
+
+    $state = $repository->state('login:127.0.0.1');
 
     expect($state->attempts)->toBe(0)
         ->and($state->isLocked)->toBeFalse()
@@ -26,33 +41,39 @@ it('returns an empty initial state', function (): void {
 });
 
 it('increments the attempt count', function (): void {
-    expect($this->repository->incrementAttempts('login'))
+    $repository = makeRepository();
+
+    expect($repository->incrementAttempts('login'))
         ->toBe(1);
 
-    expect($this->repository->state('login')->attempts)
+    expect($repository->state('login')->attempts)
         ->toBe(1);
 
-    expect($this->repository->incrementAttempts('login'))
+    expect($repository->incrementAttempts('login'))
         ->toBe(2);
 
-    expect($this->repository->state('login')->attempts)
+    expect($repository->state('login')->attempts)
         ->toBe(2);
 });
 
 it('resets the attempt count', function (): void {
-    $this->repository->incrementAttempts('login');
-    $this->repository->incrementAttempts('login');
+    $repository = makeRepository();
 
-    $this->repository->resetAttempts('login');
+    $repository->incrementAttempts('login');
+    $repository->incrementAttempts('login');
 
-    expect($this->repository->state('login')->attempts)
+    $repository->resetAttempts('login');
+
+    expect($repository->state('login')->attempts)
         ->toBe(0);
 });
 
 it('locks a key', function (): void {
-    $this->repository->lock('login', 10);
+    $repository = makeRepository();
 
-    $state = $this->repository->state('login');
+    $repository->lock('login', 10);
+
+    $state = $repository->state('login');
 
     expect($state->isLocked)->toBeTrue()
         ->and($state->remainingLockSeconds)
@@ -61,44 +82,52 @@ it('locks a key', function (): void {
 });
 
 it('unlocks a key', function (): void {
-    $this->repository->lock('login', 10);
+    $repository = makeRepository();
 
-    $this->repository->unlock('login');
+    $repository->lock('login', 10);
 
-    $state = $this->repository->state('login');
+    $repository->unlock('login');
+
+    $state = $repository->state('login');
 
     expect($state->isLocked)->toBeFalse()
         ->and($state->remainingLockSeconds)->toBe(0);
 });
 
 it('keeps attempts separate for different keys', function (): void {
-    $this->repository->incrementAttempts('login');
-    $this->repository->incrementAttempts('register');
+    $repository = makeRepository();
 
-    expect($this->repository->state('login')->attempts)
+    $repository->incrementAttempts('login');
+    $repository->incrementAttempts('register');
+
+    expect($repository->state('login')->attempts)
         ->toBe(1);
 
-    expect($this->repository->state('register')->attempts)
+    expect($repository->state('register')->attempts)
         ->toBe(1);
 });
 
 it('keeps lock state separate for different keys', function (): void {
-    $this->repository->lock('login', 10);
+    $repository = makeRepository();
 
-    expect($this->repository->state('login')->isLocked)
+    $repository->lock('login', 10);
+
+    expect($repository->state('login')->isLocked)
         ->toBeTrue();
 
-    expect($this->repository->state('register')->isLocked)
+    expect($repository->state('register')->isLocked)
         ->toBeFalse();
 });
 
 it('does not reset attempts when locking and unlocking', function (): void {
-    $this->repository->incrementAttempts('login');
-    $this->repository->incrementAttempts('login');
+    $repository = makeRepository();
 
-    $this->repository->lock('login', 10);
-    $this->repository->unlock('login');
+    $repository->incrementAttempts('login');
+    $repository->incrementAttempts('login');
 
-    expect($this->repository->state('login')->attempts)
+    $repository->lock('login', 10);
+    $repository->unlock('login');
+
+    expect($repository->state('login')->attempts)
         ->toBe(2);
 });
