@@ -19,7 +19,10 @@ class CadenceManager extends Manager
      */
     public function getDefaultDriver(): string
     {
-        return $this->config->get('cadence.default', 'exponential');
+        /** @var string $driver */
+        $driver = $this->config->get('cadence.default', 'exponential');
+
+        return $driver;
     }
 
     /**
@@ -34,7 +37,7 @@ class CadenceManager extends Manager
     /**
      * Resolve the configured state repository.
      */
-    protected function repository()
+    protected function repository(): StateRepository
     {
         return $this->container->make(StateRepository::class);
     }
@@ -52,13 +55,13 @@ class CadenceManager extends Manager
      */
     protected function createExponentialDriver(): CadenceEngine
     {
+        /** @var int $baseDelay */
+        $baseDelay = $this->config->get(
+            'cadence.drivers.exponential.base_delay',
+        );
+
         return new CadenceEngine(
-            strategy: new ExponentialStrategy(
-                baseDelay: (int) $this->config->get(
-                    'cadence.drivers.exponential.base_delay',
-                    2,
-                ),
-            ),
+            strategy: new ExponentialStrategy($baseDelay),
             repository: $this->repository(),
             config: $this->cadenceConfig(),
         );
