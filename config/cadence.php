@@ -48,6 +48,15 @@ return [
 
         ],
 
+        'fibonacci' => [
+
+            /*
+             * The base value used to calculate fibonacci backoff delays.
+             */
+            'base_delay' => 1,
+
+        ],
+
     ],
 
 ];
