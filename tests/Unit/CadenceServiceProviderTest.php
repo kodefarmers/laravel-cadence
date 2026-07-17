@@ -33,12 +33,17 @@ it('registers the cadence manager as a singleton', function (): void {
 });
 
 it('registers the cadence alias', function (): void {
-    expect(app('cadence'))
-        ->toBe(app(CadenceManager::class));
+    /** @var CadenceManager $cadence */
+    $cadence = app('cadence');
+
+    /** @var CadenceManager $manager */
+    $manager = app(CadenceManager::class);
+
+    expect($cadence)->toBe($manager);
 });
 
 it('publishes the configuration file', function (): void {
     expect(
-        $this->app->providerIsLoaded(Kodefarmers\Cadence\CadenceServiceProvider::class)
+        app()->providerIsLoaded(Kodefarmers\Cadence\CadenceServiceProvider::class)
     )->toBeTrue();
 });
