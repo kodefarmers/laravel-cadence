@@ -2,6 +2,9 @@
 
 declare(strict_types=1);
 
+use Illuminate\Cache\ArrayStore;
+use Illuminate\Cache\Repository;
+use Illuminate\Contracts\Cache\Factory as CacheFactory;
 use Kodefarmers\Cadence\CadenceManager;
 use Kodefarmers\Cadence\Contracts\StateRepository;
 use Kodefarmers\Cadence\Repositories\CacheStateRepository;
@@ -23,6 +26,67 @@ it('registers the cadence config singleton', function (): void {
 });
 
 it('registers the state repository', function (): void {
+    expect(app(StateRepository::class))
+        ->toBeInstanceOf(CacheStateRepository::class);
+});
+
+it('uses the default cache store when no cache store is configured', function (): void {
+    config()->set('cadence.cache.store', null);
+
+    /** @var Mockery\MockInterface&CacheFactory $cache */
+    $cache = Mockery::mock(CacheFactory::class);
+
+    /** @var Mockery\Expectation $expectation */
+    $expectation = $cache->shouldReceive('store');
+
+    $expectation
+        ->once()
+        ->withNoArgs()
+        ->andReturn(new Repository(new ArrayStore()));
+
+    app()->instance(CacheFactory::class, $cache);
+    app()->forgetInstance(StateRepository::class);
+
+    expect(app(StateRepository::class))
+        ->toBeInstanceOf(CacheStateRepository::class);
+});
+
+it('resolves the configured cache store from the cache factory', function (): void {
+    config()->set('cadence.cache.store', 'redis');
+
+    /** @var Mockery\MockInterface&CacheFactory $cache */
+    $cache = Mockery::mock(CacheFactory::class);
+
+    /** @var Mockery\Expectation $expectation */
+    $expectation = $cache->shouldReceive('store');
+
+    $expectation->once()
+        ->with('redis')
+        ->andReturn(new Repository(new ArrayStore()));
+
+    app()->instance(CacheFactory::class, $cache);
+    app()->forgetInstance(StateRepository::class);
+
+    expect(app(StateRepository::class))
+        ->toBeInstanceOf(CacheStateRepository::class);
+});
+
+it('supports alternative cache stores such as memcached', function (): void {
+    config()->set('cadence.cache.store', 'memcached');
+
+    /** @var Mockery\MockInterface&CacheFactory $cache */
+    $cache = Mockery::mock(CacheFactory::class);
+
+    /** @var Mockery\Expectation $expectation */
+    $expectation = $cache->shouldReceive('store');
+
+    $expectation->once()
+        ->with('memcached')
+        ->andReturn(new Repository(new ArrayStore()));
+
+    app()->instance(CacheFactory::class, $cache);
+    app()->forgetInstance(StateRepository::class);
+
     expect(app(StateRepository::class))
         ->toBeInstanceOf(CacheStateRepository::class);
 });
