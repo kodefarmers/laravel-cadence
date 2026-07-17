@@ -25,10 +25,10 @@ final readonly class CacheStateRepository implements StateRepository
     public function state(string $key): State
     {
         /** @var int $expiresAt */
-        $expiresAt = $this->cache->get($this->lockExpiresAtKey($key), 0);
+        $expiresAt = $this->getInt($this->lockExpiresAtKey($key));
 
         /** @var int $attempts */
-        $attempts = $this->cache->get($this->attemptsKey($key), 0);
+        $attempts = $this->getInt($this->attemptsKey($key));
 
         /** @var bool $isLocked */
         $isLocked = $this->cache->has($this->lockKey($key));
@@ -119,5 +119,20 @@ final readonly class CacheStateRepository implements StateRepository
     private function lockExpiresAtKey(string $key): string
     {
         return "cadence:lock:{$key}:expires_at";
+    }
+
+    /**
+     * Retrieves a numeric value from the cache and normalizes it to an integer.
+     *
+     * Cache drivers may return integers or numeric strings (for example, Redis).
+     * Non-numeric or missing values are normalized to 0.
+     */
+    private function getInt(string $key): int
+    {
+        $value = $this->cache->get($key, 0);
+
+        return is_numeric($value)
+            ? (int) $value
+            : 0;
     }
 }

@@ -119,3 +119,43 @@ it('does not reset attempts when locking and unlocking', function (): void {
     expect($repository->state('login')->attempts)
         ->toBe(2);
 });
+
+it('casts string values from the cache backend to integers', function (): void {
+    /** @var Repository&Mockery\MockInterface $cache */
+    $cache = Mockery::mock(Repository::class);
+
+    /** @var Mockery\Expectation $expectation */
+    $expectation = $cache->shouldReceive('get');
+
+    $expectation
+        ->with('cadence:lock:login:expires_at', 0)
+        ->once()
+        ->andReturn('10');
+
+    $expectation
+        ->with('cadence:attempts:login', 0)
+        ->once()
+        ->andReturn('2');
+
+    /** @var Mockery\Expectation $expectation */
+    $expectation = $cache->shouldReceive('has');
+
+    $expectation
+        ->with('cadence:lock:login')
+        ->once()
+        ->andReturnFalse();
+
+    $repository = new CacheStateRepository(
+        cache: $cache,
+        config: new CadenceConfig(
+            freeAttempts: 3,
+            idleTimeout: 3600,
+        ),
+    );
+
+    $state = $repository->state('login');
+
+    expect($state->attempts)->toBe(2)
+        ->and($state->isLocked)->toBeFalse()
+        ->and($state->remainingLockSeconds)->toBe(0);
+});
