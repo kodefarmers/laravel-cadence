@@ -64,11 +64,15 @@ The published configuration file is located at `config/cadence.php`.
 ```php
 return [
 
-    'default' => 'exponential',
+    'default' => env('CADENCE_DEFAULT_DRIVER', 'exponential'),
 
     'free_attempts' => 3,
 
     'idle_timeout' => 3600,
+
+    'cache' => [
+        'store' => env('CADENCE_CACHE_STORE'),
+    ],
 
     'drivers' => [
 
@@ -87,13 +91,33 @@ return [
 
 ## Configuration Options
 
-| Option                           | Default       | Description                                                  |
-| -------------------------------- | ------------- | ------------------------------------------------------------ |
-| `default`                        | `exponential` | The default backoff driver.                                  |
-| `free_attempts`                  | `3`           | Number of failures allowed before backoff is applied.        |
-| `idle_timeout`                   | `3600`        | Number of seconds to retain failure state before it expires. |
-| `drivers.exponential.base_delay` | `2`           | Base delay used by the exponential driver.                   |
-| `drivers.fibonacci.base_delay`   | `1`           | Base delay used by the fibonacci driver.                     |
+| Option                           | Default       | Description                                                                    |
+| -------------------------------- | ------------- | ------------------------------------------------------------------------------ |
+| `default`                        | `exponential` | The default backoff driver.                                                    |
+| `free_attempts`                  | `3`           | Number of failures allowed before backoff is applied.                          |
+| `idle_timeout`                   | `3600`        | Number of seconds to retain failure state before it expires.                   |
+| `cache.store`                    | `null`        | Laravel cache store name used by Cadence. Leave null to use the default store. |
+| `drivers.exponential.base_delay` | `2`           | Base delay used by the exponential driver.                                     |
+| `drivers.fibonacci.base_delay`   | `1`           | Base delay used by the fibonacci driver.                                       |
+
+## Using a Specific Laravel Cache Store
+
+Cadence uses Laravel's cache abstraction, so it can work with any cache store supported by your Laravel application.
+
+Set the store with an environment variable:
+
+```env
+CADENCE_CACHE_STORE=
+```
+
+Examples:
+
+```env
+CADENCE_CACHE_STORE=redis
+CADENCE_CACHE_STORE=database
+```
+
+If the value is empty or not set, Cadence falls back to Laravel's default cache store.
 
 ---
 
