@@ -18,18 +18,6 @@ function makeRepository(): CacheStateRepository
     );
 }
 
-beforeEach(function (): void {
-    $repository = makeRepository();
-
-    $repository = new CacheStateRepository(
-        cache: new Repository(new ArrayStore()),
-        config: new CadenceConfig(
-            freeAttempts: 3,
-            idleTimeout: 3600
-        ),
-    );
-});
-
 it('returns an empty initial state', function (): void {
     $repository = makeRepository();
 
