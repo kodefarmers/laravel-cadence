@@ -13,7 +13,7 @@ return [
     |
     */
 
-    'default' => env('CADENCE_DRIVER', 'exponential'),
+    'default' => 'exponential',
 
     /*
     |--------------------------------------------------------------------------
