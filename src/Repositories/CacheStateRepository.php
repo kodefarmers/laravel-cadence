@@ -24,12 +24,22 @@ final readonly class CacheStateRepository implements StateRepository
      */
     public function state(string $key): State
     {
-        $expiresAt = (int) $this->cache->get($this->lockExpiresAtKey($key), 0);
+        /** @var int $expiresAt */
+        $expiresAt = $this->cache->get($this->lockExpiresAtKey($key), 0);
+
+        /** @var int $attempts */
+        $attempts = $this->cache->get($this->attemptsKey($key), 0);
+
+        /** @var bool $isLocked */
+        $isLocked = $this->cache->has($this->lockKey($key));
+
+        /** @var int $remainingLockSeconds */
+        $remainingLockSeconds = max(0, $expiresAt - time());
 
         return new State(
-            attempts: (int) $this->cache->get($this->attemptsKey($key), 0),
-            isLocked: $this->cache->has($this->lockKey($key)),
-            remainingLockSeconds: max(0, $expiresAt - time()),
+            attempts: $attempts,
+            isLocked: $isLocked,
+            remainingLockSeconds: $remainingLockSeconds,
         );
     }
 
@@ -43,9 +53,16 @@ final readonly class CacheStateRepository implements StateRepository
         $attempts = $this->cache->increment($cacheKey);
 
         if ($attempts === false) {
-            $currentAttempts = (int) $this->cache->get($cacheKey, 0);
+            /** @var int $currentAttempts */
+            $currentAttempts = $this->cache->get($cacheKey, 0);
             $attempts = $currentAttempts + 1;
         }
+
+        /**
+         * @todo I'm yet to understand how/when would increment() ever return true
+         * and casting true to int gives 1 this might hide bug in this package
+         */
+        $attempts = (int) $attempts;
 
         $this->cache->put($cacheKey, $attempts, $this->config->idleTimeout);
 
