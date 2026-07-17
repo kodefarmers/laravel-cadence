@@ -16,7 +16,7 @@ Cadence stores its state in Laravel's cache layer and provides a simple, framewo
 - Cache-backed state using Laravel's cache system
 - Configurable free-attempt threshold and idle timeout
 - Clean facade and dependency injection support
-- Driver-based architecture with a built-in exponential backoff driver
+- Flexible strategy-based architecture for creating and swapping backoff algorithms
 
 ---
 
@@ -34,7 +34,8 @@ Common use cases include:
 - Webhook delivery retries
 - Expensive or sensitive operations that should back off after consecutive failures
 
-Unlike Laravel's rate limiter, Cadence does **not** limit every request. Instead, it only introduces delays after repeated failures, allowing successful operations to proceed normally while discouraging abusive or repeated failed attempts.
+Unlike Laravel's rate limiter, Cadence does **not** limit every request.
+Instead, it only introduces delays after repeated failures, allowing successful operations to proceed normally while discouraging abusive or repeated failed attempts.
 
 ---
 
@@ -63,7 +64,7 @@ The published configuration file is located at `config/cadence.php`.
 ```php
 return [
 
-    'default' => env('CADENCE_DRIVER', 'exponential'),
+    'default' => 'exponential',
 
     'free_attempts' => 3,
 
@@ -73,6 +74,10 @@ return [
 
         'exponential' => [
             'base_delay' => 2,
+        ],
+
+        'fibonacci' => [
+            'base_delay' => 1,
         ],
 
     ],
@@ -88,6 +93,7 @@ return [
 | `free_attempts`                  | `3`           | Number of failures allowed before backoff is applied.        |
 | `idle_timeout`                   | `3600`        | Number of seconds to retain failure state before it expires. |
 | `drivers.exponential.base_delay` | `2`           | Base delay used by the exponential driver.                   |
+| `drivers.fibonacci.base_delay`   | `1`           | Base delay used by the fibonacci driver.                     |
 
 ---
 
@@ -95,45 +101,71 @@ return [
 
 A typical workflow consists of three steps:
 
-1. Check whether the key is currently locked.
+1. Ensure the key is not currently locked.
 2. Record failures whenever the protected operation fails.
-3. Record success to reset the backoff state.
+3. Record a success to reset the backoff state.
 
 ```php
 use Kodefarmers\Cadence\Exceptions\CadenceLockedException;
 use Kodefarmers\Cadence\Facades\Cadence;
 
-$engine = Cadence::driver();
+$cadence = Cadence::driver();
+
+$key = 'operation:resource-id';
 
 try {
-    $engine->ensureNotLocked('login:127.0.0.1');
+    $cadence->ensureNotLocked($key);
 
-    // Attempt authentication...
+    // Perform the protected operation...
 
-    if (! $authenticated) {
-        $result = $engine->recordFailure('login:127.0.0.1');
+    if ($operationFailed) {
+        $result = $cadence->recordFailure($key);
 
-        return response()->json([
-            'message' => 'Invalid credentials.',
+        return [
+            'success' => false,
             'locked' => $result->isLocked,
             'retry_after' => $result->delay,
-        ], 401);
+        ];
     }
 
-    $engine->recordSuccess('login:127.0.0.1');
+    $cadence->recordSuccess($key);
 
-    return response()->json([
-        'message' => 'Login successful.',
-    ]);
+    return [
+        'success' => true,
+    ];
 } catch (CadenceLockedException $exception) {
-    return response()->json([
-        'message' => 'Too many failed attempts.',
+    return [
+        'success' => false,
+        'message' => 'Operation is temporarily locked.',
         'retry_after' => $exception->retryAfter(),
-    ], 429);
+    ];
 }
 ```
 
 By default, the first three failures are allowed without any delay. The fourth failure becomes the first backoff violation and applies the configured delay.
+
+## Using Different Drivers
+
+The `driver()` method accepts the name of the backoff strategy to use.
+
+```php
+$cadence = Cadence::driver('exponential');
+
+$cadence = Cadence::driver('fibonacci');
+```
+
+See the [Available Drivers](#available-drivers) section for the list of built-in drivers and their behavior.
+
+---
+
+# Available Drivers
+
+Laravel Cadence currently includes the following backoff driver:
+
+| Driver        | Description                                                               |
+| ------------- | ------------------------------------------------------------------------- |
+| `exponential` | Applies progressive exponential delays using the configured `base_delay`. |
+| `fibonacci`   | Applies progressively increasing delays based on the Fibonacci sequence.  |
 
 ---
 
@@ -149,7 +181,8 @@ Cadence tracks failures for a unique key. A key can represent anything you want 
 
 Each failed attempt increases the recorded attempt count for that key.
 
-Once the configured free-attempt threshold has been exceeded, Cadence temporarily locks the key using the configured backoff driver.
+Once the configured free-attempt threshold has been exceeded,
+Cadence temporarily locks the key using the configured backoff driver.
 
 While the key is locked, calling `ensureNotLocked()` throws a `CadenceLockedException`.
 
@@ -166,7 +199,7 @@ Using the facade:
 ```php
 use Kodefarmers\Cadence\Facades\Cadence;
 
-$engine = Cadence::driver();
+$cadence = Cadence::driver();
 ```
 
 Using dependency injection:
@@ -183,7 +216,7 @@ class LoginService
 
     public function handle(string $key): void
     {
-        $engine = $this->cadence->driver();
+        $cadence = $this->cadence->driver();
 
         // ...
     }
@@ -195,7 +228,7 @@ class LoginService
 ## Recording Failures
 
 ```php
-$result = $engine->recordFailure($key);
+$result = $cadence->recordFailure($key);
 ```
 
 Returns a `CadenceResult` containing:
@@ -212,7 +245,7 @@ Returns a `CadenceResult` containing:
 ## Recording Success
 
 ```php
-$engine->recordSuccess($key);
+$cadence->recordSuccess($key);
 ```
 
 Resets the recorded attempts and removes any active lock.
@@ -222,13 +255,13 @@ Resets the recorded attempts and removes any active lock.
 ## Checking Lock State
 
 ```php
-$engine->ensureNotLocked($key);
+$cadence->ensureNotLocked($key);
 
-$engine->isLocked($key);
+$cadence->isLocked($key);
 
-$engine->remainingBackoff($key);
+$cadence->remainingBackoff($key);
 
-$engine->attempts($key);
+$cadence->attempts($key);
 ```
 
 ### `ensureNotLocked()`
@@ -262,16 +295,6 @@ The exception exposes:
 
 ---
 
-# Available Drivers
-
-Laravel Cadence currently includes the following backoff driver:
-
-| Driver        | Description                                                               |
-| ------------- | ------------------------------------------------------------------------- |
-| `exponential` | Applies progressive exponential delays using the configured `base_delay`. |
-
----
-
 # Testing
 
 Run the test suite:
@@ -298,7 +321,8 @@ composer format
 
 Contributions are welcome.
 
-Please open an issue to discuss significant changes before submitting a pull request. All pull requests should include appropriate tests for new functionality or behavior changes.
+Please open an issue to discuss significant changes before submitting a pull request.
+All pull requests should include appropriate tests for new functionality or behavior changes.
 
 ---
 
@@ -316,4 +340,4 @@ If you discover a security vulnerability, please report it privately instead of 
 
 # License
 
-Laravel Cadence is open-source software licensed under the MIT License.
+Cadence is open-source software licensed under the MIT License.
