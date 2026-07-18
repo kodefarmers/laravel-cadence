@@ -132,6 +132,9 @@ it('casts string values from the cache backend to integers', function (): void {
         ->once()
         ->andReturn('10');
 
+    /** @var Mockery\Expectation $expectation */
+    $expectation = $cache->shouldReceive('get');
+
     $expectation
         ->with('cadence:attempts:login', 0)
         ->once()
