@@ -6,6 +6,8 @@
 [![Static Analysis](https://img.shields.io/github/actions/workflow/status/kodefarmers/laravel-cadence/phpstan.yml?branch=main&label=phpstan&style=for-the-badge)](https://github.com/kodefarmers/laravel-cadence/actions/workflows/phpstan.yml)
 [![Total Downloads](https://img.shields.io/packagist/dt/kodefarmers/laravel-cadence?style=for-the-badge)](https://packagist.org/packages/kodefarmers/laravel-cadence)
 
+![Cadence Banner](https://raw.githubusercontent.com/kodefarmers/laravel-cadence/refs/heads/main/assets/cadence-github-preview.png)
+
 Cadence is a Laravel package for applying progressive backoff based on consecutive failures.
 
 Unlike traditional rate limiting, Cadence only introduces delays after repeated failed attempts.
