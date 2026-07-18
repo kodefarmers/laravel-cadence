@@ -61,6 +61,15 @@ return [
 
         ],
 
+        'linear' => [
+
+            /*
+             * The base value used to calculate linear backoff delays.
+             */
+            'base_delay' => 2,
+
+        ],
+
     ],
 
 ];

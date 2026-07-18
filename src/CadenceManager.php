@@ -8,6 +8,7 @@ use Illuminate\Support\Manager;
 use Kodefarmers\Cadence\Contracts\StateRepository;
 use Kodefarmers\Cadence\Strategies\ExponentialStrategy;
 use Kodefarmers\Cadence\Strategies\FibonacciStrategy;
+use Kodefarmers\Cadence\Strategies\LinearStrategy;
 use Kodefarmers\Cadence\ValueObjects\CadenceConfig;
 
 /**
@@ -80,6 +81,23 @@ class CadenceManager extends Manager
 
         return new CadenceEngine(
             strategy: new FibonacciStrategy($baseDelay),
+            repository: $this->repository(),
+            config: $this->cadenceConfig(),
+        );
+    }
+
+    /**
+     * Create the linear backoff driver.
+     */
+    protected function createLinearDriver(): CadenceEngine
+    {
+        /** @var int $baseDelay */
+        $baseDelay = $this->config->get(
+            'cadence.drivers.linear.base_delay',
+        );
+
+        return new CadenceEngine(
+            strategy: new LinearStrategy($baseDelay),
             repository: $this->repository(),
             config: $this->cadenceConfig(),
         );
