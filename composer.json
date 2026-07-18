@@ -1,20 +1,22 @@
 {
     "name": "kodefarmers/laravel-cadence",
-    "description": "Strategy-based rate limiting and backoff for Laravel.",
+    "description": "Progressive, strategy-based backoff for Laravel.",
     "type": "library",
     "keywords": [
         "laravel",
-        "rate-limiter",
-        "rate-limiting",
+        "laravel-package",
         "backoff",
         "exponential-backoff",
+        "fibonacci-backoff",
+        "linear-backoff",
+        "quadratic-backoff",
         "retry",
-        "delay",
-        "strategy",
-        "throttle",
+        "retry-strategy",
         "cache",
         "laravel-cadence",
-        "cadence"
+        "cadence",
+        "strategy",
+        "throttle"
     ],
     "homepage": "https://github.com/kodefarmers/laravel-cadence",
     "license": "MIT",
@@ -22,7 +24,7 @@
         {
             "name": "Shivaji Chalise",
             "email": "respond2shivaji@gmail.com",
-            "role": "Developer"
+            "role": "Maintainer"
         }
     ],
     "support": {
@@ -57,9 +59,14 @@
         "post-autoload-dump": "@composer run prepare",
         "prepare": "@php vendor/bin/testbench package:discover --ansi",
         "analyse": "vendor/bin/phpstan analyse --memory-limit=1G",
+        "format": "vendor/bin/pint",
         "test": "vendor/bin/pest",
         "test-coverage": "vendor/bin/pest --coverage",
-        "format": "vendor/bin/pint"
+        "ci": [
+            "@composer format -- --test",
+            "@composer analyse",
+            "@composer test"
+        ]
     },
     "config": {
         "sort-packages": true,
