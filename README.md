@@ -103,6 +103,10 @@ return [
             'base_delay' => 1,
         ],
 
+        'linear' => [
+            'base_delay' => 2,
+        ],
+
     ],
 
 ];
@@ -118,20 +122,17 @@ return [
 | `cache.store`                    | `null`        | Laravel cache store name used by Cadence. Leave null to use the default store. |
 | `drivers.exponential.base_delay` | `2`           | Base delay used by the exponential driver.                                     |
 | `drivers.fibonacci.base_delay`   | `1`           | Base delay used by the fibonacci driver.                                       |
+| `drivers.linear.base_delay`      | `2`           | Base delay used by the linear driver.                                          |
 
 ## Using a Specific Backoff Strategy
 
 Cadence supports multiple backoff strategies. You can configure the default strategy using the `CADENCE_DEFAULT_DRIVER` environment variable.
 
 ```env
-CADENCE_DEFAULT_DRIVER=exponential
-```
-
-Other available strategies include:
-
-```env
 CADENCE_DEFAULT_DRIVER=fibonacci
 ```
+
+See the [Available Drivers](#available-drivers) section for the list of built-in drivers and their behavior.
 
 If not specified, Cadence uses the `exponential` strategy by default.
 
@@ -210,8 +211,6 @@ By default, the first three failures are allowed without any delay. The fourth f
 The `driver()` method accepts the name of the backoff strategy to use.
 
 ```php
-$cadence = Cadence::driver('exponential');
-
 $cadence = Cadence::driver('fibonacci');
 ```
 
@@ -227,6 +226,7 @@ Laravel Cadence currently includes the following backoff drivers:
 | ------------- | ------------------------------------------------------------------------- |
 | `exponential` | Applies progressive exponential delays using the configured `base_delay`. |
 | `fibonacci`   | Applies progressively increasing delays based on the Fibonacci sequence.  |
+| `linear`      | Applies progressively increasing delays based on the linear sequence.     |
 
 ---
 
