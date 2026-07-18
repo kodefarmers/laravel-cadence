@@ -70,6 +70,15 @@ return [
 
         ],
 
+        'quadratic' => [
+
+            /*
+             * The base value used to calculate quadratic backoff delays.
+             */
+            'base_delay' => 1,
+
+        ],
+
     ],
 
 ];

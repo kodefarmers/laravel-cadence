@@ -9,6 +9,7 @@ use Kodefarmers\Cadence\Contracts\StateRepository;
 use Kodefarmers\Cadence\Strategies\ExponentialStrategy;
 use Kodefarmers\Cadence\Strategies\FibonacciStrategy;
 use Kodefarmers\Cadence\Strategies\LinearStrategy;
+use Kodefarmers\Cadence\Strategies\QuadraticStrategy;
 use Kodefarmers\Cadence\ValueObjects\CadenceConfig;
 
 /**
@@ -98,6 +99,23 @@ class CadenceManager extends Manager
 
         return new CadenceEngine(
             strategy: new LinearStrategy($baseDelay),
+            repository: $this->repository(),
+            config: $this->cadenceConfig(),
+        );
+    }
+
+    /**
+     * Create the quadratic backoff driver.
+     */
+    protected function createQuadraticDriver(): CadenceEngine
+    {
+        /** @var int $baseDelay */
+        $baseDelay = $this->config->get(
+            'cadence.drivers.quadratic.base_delay',
+        );
+
+        return new CadenceEngine(
+            strategy: new QuadraticStrategy($baseDelay),
             repository: $this->repository(),
             config: $this->cadenceConfig(),
         );
