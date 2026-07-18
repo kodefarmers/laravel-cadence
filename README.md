@@ -107,6 +107,10 @@ return [
             'base_delay' => 2,
         ],
 
+        'quadratic' => [
+            'base_delay' => 1,
+        ],
+
     ],
 
 ];
@@ -123,6 +127,7 @@ return [
 | `drivers.exponential.base_delay` | `2`           | Base delay used by the exponential driver.                                     |
 | `drivers.fibonacci.base_delay`   | `1`           | Base delay used by the fibonacci driver.                                       |
 | `drivers.linear.base_delay`      | `2`           | Base delay used by the linear driver.                                          |
+| `drivers.quadratic.base_delay`   | `1`           | Base delay used by the quadratic driver.                                       |
 
 ## Using a Specific Backoff Strategy
 
@@ -227,6 +232,7 @@ Laravel Cadence currently includes the following backoff drivers:
 | `exponential` | Applies progressive exponential delays using the configured `base_delay`. |
 | `fibonacci`   | Applies progressively increasing delays based on the Fibonacci sequence.  |
 | `linear`      | Applies progressively increasing delays based on the linear sequence.     |
+| `quadratic`   | Applies progressively increasing delays based on the quadratic sequence.  |
 
 ---
 
