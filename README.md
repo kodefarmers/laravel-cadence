@@ -1,22 +1,39 @@
 # Cadence
 
-Cadence is a Laravel package for tracking repeated failures and applying progressive backoff on a per-key basis.
+[![Latest Version on Packagist](https://img.shields.io/packagist/v/kodefarmers/laravel-cadence.svg?style=for-the-badge)](https://packagist.org/packages/kodefarmers/laravel-cadence)
+[![PHP Version](https://img.shields.io/packagist/php-v/kodefarmers/laravel-cadence?style=for-the-badge)](https://packagist.org/packages/kodefarmers/laravel-cadence)
+[![Tests](https://img.shields.io/github/actions/workflow/status/kodefarmers/laravel-cadence/tests.yml?branch=main&label=tests&style=for-the-badge)](https://github.com/kodefarmers/laravel-cadence/actions/workflows/tests.yml)
+[![Static Analysis](https://img.shields.io/github/actions/workflow/status/kodefarmers/laravel-cadence/phpstan.yml?branch=main&label=phpstan&style=for-the-badge)](https://github.com/kodefarmers/laravel-cadence/actions/workflows/phpstan.yml)
+[![Total Downloads](https://img.shields.io/packagist/dt/kodefarmers/laravel-cadence?style=for-the-badge)](https://packagist.org/packages/kodefarmers/laravel-cadence)
 
-Unlike traditional rate limiting, Cadence only introduces delays after consecutive failures. Successful operations immediately reset the backoff state, making Cadence well suited for operations where repeated failures should temporarily slow down future attempts without penalizing successful requests.
+Cadence is a Laravel package for applying progressive backoff based on consecutive failures.
 
-Cadence stores its state in Laravel's cache layer and provides a simple, framework-friendly API through a manager, facade, and dependency injection.
+Unlike traditional rate limiting, Cadence only introduces delays after repeated failed attempts.
+A successful operation immediately resets the backoff state, allowing normal traffic to continue uninterrupted while slowing down repeated failures.
+
+Cadence stores its state using Laravel's cache abstraction and provides a clean, Laravel-native API through a manager, facade, and dependency injection.
+
+---
+
+## Why Cadence?
+
+Laravel's rate limiter controls **how often** an action can be performed.
+
+Cadence controls **how long the next attempt should wait** after repeated failures.
+
+Instead of limiting every request, Cadence progressively increases the delay between failed attempts and immediately resets the backoff state after a successful operation.
 
 ---
 
 # Features
 
 - Track repeated failures on a per-key basis
-- Apply progressive backoff after a configurable number of free attempts
-- Reset backoff immediately after a successful operation
-- Cache-backed state using Laravel's cache system
-- Configurable free-attempt threshold and idle timeout
-- Clean facade and dependency injection support
-- Flexible strategy-based architecture for creating and swapping backoff algorithms
+- Apply progressive backoff after configurable free attempts
+- Reset backoff immediately after successful operations
+- Store state using Laravel's cache abstraction
+- Configure free attempts and idle timeout
+- Switch between configurable backoff strategies
+- Resolve engines via the facade or dependency injection
 
 ---
 
@@ -100,6 +117,24 @@ return [
 | `drivers.exponential.base_delay` | `2`           | Base delay used by the exponential driver.                                     |
 | `drivers.fibonacci.base_delay`   | `1`           | Base delay used by the fibonacci driver.                                       |
 
+## Using a Specific Backoff Strategy
+
+Cadence supports multiple backoff strategies. You can configure the default strategy using the `CADENCE_DEFAULT_DRIVER` environment variable.
+
+```env
+CADENCE_DEFAULT_DRIVER=exponential
+```
+
+Other available strategies include:
+
+```env
+CADENCE_DEFAULT_DRIVER=fibonacci
+```
+
+If not specified, Cadence uses the `exponential` strategy by default.
+
+---
+
 ## Using a Specific Laravel Cache Store
 
 Cadence uses Laravel's cache abstraction, so it can work with any cache store supported by your Laravel application.
@@ -168,7 +203,7 @@ try {
 
 By default, the first three failures are allowed without any delay. The fourth failure becomes the first backoff violation and applies the configured delay.
 
-## Using Different Drivers
+## Using Different Backoff Strategies
 
 The `driver()` method accepts the name of the backoff strategy to use.
 
@@ -184,7 +219,7 @@ See the [Available Drivers](#available-drivers) section for the list of built-in
 
 # Available Drivers
 
-Laravel Cadence currently includes the following backoff driver:
+Laravel Cadence currently includes the following backoff drivers:
 
 | Driver        | Description                                                               |
 | ------------- | ------------------------------------------------------------------------- |
@@ -205,8 +240,7 @@ Cadence tracks failures for a unique key. A key can represent anything you want 
 
 Each failed attempt increases the recorded attempt count for that key.
 
-Once the configured free-attempt threshold has been exceeded,
-Cadence temporarily locks the key using the configured backoff driver.
+Once the configured free-attempt threshold has been exceeded, Cadence temporarily locks the key using the configured backoff strategy.
 
 While the key is locked, calling `ensureNotLocked()` throws a `CadenceLockedException`.
 
@@ -216,7 +250,7 @@ Calling `recordSuccess()` clears the recorded failures and immediately removes a
 
 # Public API
 
-## Resolving an Engine
+## Resolving a Cadence Engine
 
 Using the facade:
 
@@ -276,7 +310,7 @@ Resets the recorded attempts and removes any active lock.
 
 ---
 
-## Checking Lock State
+## Querying State
 
 ```php
 $cadence->ensureNotLocked($key);
@@ -352,7 +386,7 @@ All pull requests should include appropriate tests for new functionality or beha
 
 # Changelog
 
-Please see `CHANGELOG.md` for a complete history of changes.
+See `CHANGELOG.md` for a complete release history.
 
 ---
 
