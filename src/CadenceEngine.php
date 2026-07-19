@@ -6,7 +6,9 @@ namespace Kodefarmers\Cadence;
 
 use Kodefarmers\Cadence\Contracts\DelayStrategy;
 use Kodefarmers\Cadence\Contracts\StateRepository;
+use Kodefarmers\Cadence\Enums\JitterType;
 use Kodefarmers\Cadence\Exceptions\CadenceLockedException;
+use Kodefarmers\Cadence\Strategies\JitterStrategy;
 use Kodefarmers\Cadence\ValueObjects\CadenceConfig;
 use Kodefarmers\Cadence\ValueObjects\CadenceResult;
 
@@ -48,6 +50,33 @@ final readonly class CadenceEngine
             violationCount: $violation,
             delay: $delay,
             isLocked: true,
+        );
+    }
+
+    /**
+     * Return a new engine that applies jitter to the configured delay strategy.
+     *
+     * Jitter decorates the current delay strategy by introducing controlled
+     * randomness to the calculated delay. This helps distribute retries over time
+     * and reduces synchronized retry bursts.
+     *
+     * If the strategy is already wrapped with jitter, the existing decorator is
+     * replaced with one using the specified jitter algorithm.
+     *
+     * @param  JitterType  $type  The jitter algorithm to apply.
+     * @return self A new engine instance with the configured jitter applied.
+     */
+    public function jitter(
+        JitterType $type = JitterType::FULL,
+    ): self {
+        $strategy = $this->strategy instanceof JitterStrategy
+            ? $this->strategy->strategy()
+            : $this->strategy;
+
+        return new self(
+            strategy: new JitterStrategy($strategy, $type),
+            repository: $this->repository,
+            config: $this->config,
         );
     }
 
