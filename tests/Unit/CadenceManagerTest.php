@@ -6,6 +6,7 @@ use Illuminate\Config\Repository as ConfigRepository;
 use Kodefarmers\Cadence\CadenceEngine;
 use Kodefarmers\Cadence\CadenceManager;
 use Kodefarmers\Cadence\Contracts\StateRepository;
+use Kodefarmers\Cadence\Enums\JitterType;
 use Kodefarmers\Cadence\Tests\Fakes\FakeStateRepository;
 use Kodefarmers\Cadence\ValueObjects\CadenceConfig;
 
@@ -69,4 +70,21 @@ it('uses the configured default driver', function (): void {
 
     expect($manager->driver())
         ->toBeInstanceOf(CadenceEngine::class);
+});
+
+it('allows jitter to be applied fluently to a driver', function (): void {
+    $manager = new CadenceManager(app());
+
+    $engine = $manager->driver('exponential')->jitter(JitterType::FULL);
+
+    $engine->recordFailure('login');
+    $engine->recordFailure('login');
+    $engine->recordFailure('login');
+
+    $result = $engine->recordFailure('login');
+
+    expect($result->delay)
+        ->toBeInt()
+        ->toBeGreaterThanOrEqual(0)
+        ->toBeLessThanOrEqual(2);
 });
