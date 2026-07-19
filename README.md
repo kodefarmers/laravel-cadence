@@ -13,7 +13,7 @@ Cadence is a Laravel package for applying progressive backoff based on consecuti
 Unlike traditional rate limiting, Cadence only introduces delays after repeated failed attempts.
 A successful operation immediately resets the backoff state, allowing normal traffic to continue uninterrupted while slowing down repeated failures.
 
-Cadence stores its state using Laravel's cache abstraction and provides a clean, Laravel-native API through a manager, facade, and dependency injection.
+Cadence stores its state using Laravel's cache abstraction and provides a clean, Laravel-native API through a manager, facade, and dependency injection. It supports multiple backoff strategies and optional jitter algorithms to help distribute retries and reduce synchronized retry bursts.
 
 ---
 
@@ -31,10 +31,11 @@ Instead of limiting every request, Cadence progressively increases the delay bet
 
 - Track repeated failures on a per-key basis
 - Apply progressive backoff after configurable free attempts
+- Multiple built-in backoff strategies (Exponential, Fibonacci, Linear, Quadratic)
+- Optional jitter algorithms to distribute retries and reduce synchronized retry bursts
 - Reset backoff immediately after successful operations
 - Store state using Laravel's cache abstraction
-- Configure free attempts and idle timeout
-- Switch between configurable backoff strategies
+- Configure free attempts, idle timeout, and cache store
 - Resolve engines via the facade or dependency injection
 
 ---
@@ -137,7 +138,7 @@ Cadence supports multiple backoff strategies. You can configure the default stra
 CADENCE_DEFAULT_DRIVER=fibonacci
 ```
 
-See the [Available Drivers](#available-drivers) section for the list of built-in drivers and their behavior.
+See the [Available Backoff Strategies](#available-backoff-strategies) section for the list of built-in drivers and their behavior.
 
 If not specified, Cadence uses the `exponential` strategy by default.
 
@@ -219,11 +220,11 @@ The `driver()` method accepts the name of the backoff strategy to use.
 $cadence = Cadence::driver('fibonacci');
 ```
 
-See the [Available Drivers](#available-drivers) section for the list of built-in drivers and their behavior.
+See the [Available Backoff Strategies](#available-backoff-strategies) section for the list of built-in drivers and their behavior.
 
 ---
 
-# Available Drivers
+# Available Backoff Strategies
 
 Laravel Cadence currently includes the following backoff drivers:
 
@@ -233,6 +234,33 @@ Laravel Cadence currently includes the following backoff drivers:
 | `fibonacci`   | Applies progressively increasing delays based on the Fibonacci sequence.  |
 | `linear`      | Applies progressively increasing delays based on the linear sequence.     |
 | `quadratic`   | Applies progressively increasing delays based on the quadratic sequence.  |
+
+Every built-in backoff strategy can optionally be combined with a jitter algorithm. See [Applying Jitter](#applying-jitter) for examples and available algorithms.
+
+---
+
+## Applying Jitter
+
+Jitter is an optional post-processing step that decorates any backoff strategy. It adds controlled randomness to the delay returned by the selected strategy without replacing that strategy.
+
+This helps reduce synchronized retry bursts and the thundering herd problem by spreading retries across a randomized window.
+
+```php
+use Kodefarmers\Cadence\Enums\JitterType;
+
+Cadence::driver('exponential')->jitter();
+
+Cadence::driver('linear')->jitter(JitterType::EQUAL);
+```
+
+Cadence currently supports three jitter algorithms:
+
+| Algorithm           | Description                                                                |
+| ------------------- | -------------------------------------------------------------------------- |
+| `JitterType::FULL`  | Randomizes the entire delay between `0` and the calculated delay.          |
+| `JitterType::EQUAL` | Preserves roughly half of the calculated delay while randomizing the rest. |
+
+Every built-in backoff strategy can be combined with jitter. `JitterType::FULL` is used by default.
 
 ---
 
